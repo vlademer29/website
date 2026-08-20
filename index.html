@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Campus Vehicle Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            boxShadow: {
+              soft: '0 12px 30px rgba(15, 23, 42, 0.08)',
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        background: linear-gradient(135deg, #f8fafc 0%, #ecfeff 100%);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-slate-800">
+    <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      <header class="mb-8">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600">Campus Access</p>
+            <h1 class="text-3xl font-bold text-slate-900">Vehicle Entry & Exit Tracker</h1>
+          </div>
+          <button
+            id="clearAllBtn"
+            type="button"
+            class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+          >
+            Clear All
+          </button>
+        </div>
+      </header>
+
+      <main class="space-y-8">
+        <section class="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-slate-200">
+          <form id="vehicleForm" class="grid gap-4 md:grid-cols-5">
+            <div class="md:col-span-1">
+              <label for="plateNumber" class="mb-2 block text-sm font-medium text-slate-700">Plate Number</label>
+              <input
+                id="plateNumber"
+                name="plateNumber"
+                type="text"
+                maxlength="12"
+                placeholder="ABC123"
+                class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+                required
+              />
+            </div>
+
+            <div class="md:col-span-1">
+              <label for="category" class="mb-2 block text-sm font-medium text-slate-700">Category</label>
+              <select
+                id="category"
+                name="category"
+                class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+              >
+                <option value="Student">Student</option>
+                <option value="Faculty">Faculty</option>
+                <option value="Visitor">Visitor</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-1">
+              <label for="status" class="mb-2 block text-sm font-medium text-slate-700">Campus Status</label>
+              <select
+                id="status"
+                name="status"
+                class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+              >
+                <option value="IN">IN</option>
+                <option value="OUT">OUT</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-1">
+              <label for="timestamp" class="mb-2 block text-sm font-medium text-slate-700">Timestamp</label>
+              <input
+                id="timestamp"
+                name="timestamp"
+                type="datetime-local"
+                class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+                required
+              />
+            </div>
+
+            <div class="flex items-end md:col-span-1">
+              <button
+                type="submit"
+                class="inline-flex w-full items-center justify-center rounded-lg bg-cyan-600 px-4 py-2.5 font-medium text-white transition hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-200"
+              >
+                Add Record
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-slate-200">
+          <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="text-xl font-semibold text-slate-900">Recorded Vehicles</h2>
+            <div class="w-full max-w-md">
+              <label for="searchInput" class="sr-only">Search records</label>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Search by plate, category, or status..."
+                class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+              />
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full border-separate border-spacing-y-2">
+              <thead>
+                <tr class="text-left text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  <th class="px-4 py-2">Plate Number</th>
+                  <th class="px-4 py-2">Category</th>
+                  <th class="px-4 py-2">Status</th>
+                  <th class="px-4 py-2">Timestamp</th>
+                  <th class="px-4 py-2 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="recordsTableBody" class="text-sm text-slate-700"></tbody>
+            </table>
+          </div>
+
+          <div id="emptyState" class="hidden py-10 text-center text-slate-500">
+            No records found.
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const STORAGE_KEY = 'campusVehicleRecords';
+      const form = document.getElementById('vehicleForm');
+      const plateInput = document.getElementById('plateNumber');
+      const categoryInput = document.getElementById('category');
+      const statusInput = document.getElementById('status');
+      const timestampInput = document.getElementById('timestamp');
+      const recordsTableBody = document.getElementById('recordsTableBody');
+      const emptyState = document.getElementById('emptyState');
+      const searchInput = document.getElementById('searchInput');
+      const clearAllBtn = document.getElementById('clearAllBtn');
+
+      function getLocalDateTimeString(date = new Date()) {
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - offset * 60000);
+        return localDate.toISOString().slice(0, 16);
+      }
+
+      function getInitialRecords() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          return Array.isArray(saved) ? saved : [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function saveRecords(records) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      }
+
+      function resetForm() {
+        plateInput.value = '';
+        categoryInput.value = 'Student';
+        statusInput.value = 'IN';
+        timestampInput.value = getLocalDateTimeString();
+        plateInput.focus();
+      }
+
+      function formatTimestamp(value) {
+        if (!value) return '—';
+        return new Date(value).toLocaleString([], {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        });
+      }
+
+      function getCategoryClasses(category) {
+        switch (category) {
+          case 'Student':
+            return 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200';
+          case 'Faculty':
+            return 'bg-blue-100 text-blue-700 ring-1 ring-blue-200';
+          case 'Visitor':
+            return 'bg-violet-100 text-violet-700 ring-1 ring-violet-200';
+          default:
+            return 'bg-slate-100 text-slate-700 ring-1 ring-slate-200';
+        }
+      }
+
+      function getStatusClasses(status) {
+        switch (status) {
+          case 'IN':
+            return 'bg-green-100 text-green-700 ring-1 ring-green-200';
+          case 'OUT':
+            return 'bg-rose-100 text-rose-700 ring-1 ring-rose-200';
+          default:
+            return 'bg-slate-100 text-slate-700 ring-1 ring-slate-200';
+        }
+      }
+
+      function renderRecords() {
+        const query = searchInput.value.trim().toLowerCase();
+        const activeRecords = getInitialRecords().filter((record) => {
+          if (!query) return true;
+          const searchableText = `${record.plate} ${record.category} ${record.status}`.toLowerCase();
+          return searchableText.includes(query);
+        });
+
+        if (!activeRecords.length) {
+          recordsTableBody.innerHTML = '';
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        emptyState.classList.add('hidden');
+        recordsTableBody.innerHTML = activeRecords
+          .map(
+            (record) => `
+              <tr class="rounded-xl bg-slate-50 shadow-sm ring-1 ring-slate-200">
+                <td class="rounded-l-xl px-4 py-3 font-semibold text-slate-900">${record.plate}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getCategoryClasses(record.category)}">
+                    ${record.category}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusClasses(record.status)}">
+                    ${record.status}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-slate-600">${formatTimestamp(record.timestamp)}</td>
+                <td class="rounded-r-xl px-4 py-3 text-right">
+                  <button
+                    type="button"
+                    data-id="${record.id}"
+                    class="delete-btn inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            `
+          )
+          .join('');
+
+        document.querySelectorAll('.delete-btn').forEach((button) => {
+          button.addEventListener('click', () => {
+            const id = button.dataset.id;
+            const records = getInitialRecords();
+            const updatedRecords = records.filter((record) => record.id !== id);
+            saveRecords(updatedRecords);
+            renderRecords();
+          });
+        });
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const plate = plateInput.value.trim().toUpperCase();
+        const category = categoryInput.value;
+        const status = statusInput.value;
+        const timestamp = timestampInput.value;
+
+        if (!plate || !category || !status || !timestamp) {
+          alert('Please complete all fields before adding a record.');
+          return;
+        }
+
+        const records = getInitialRecords();
+        const newRecord = {
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          plate,
+          category,
+          status,
+          timestamp,
+        };
+
+        records.unshift(newRecord);
+        saveRecords(records);
+        renderRecords();
+        resetForm();
+      });
+
+      searchInput.addEventListener('input', renderRecords);
+
+      clearAllBtn.addEventListener('click', () => {
+        const shouldClear = window.confirm('Are you sure you want to delete all vehicle records?');
+        if (!shouldClear) return;
+
+        saveRecords([]);
+        renderRecords();
+      });
+
+      timestampInput.value = getLocalDateTimeString();
+      renderRecords();
+    </script>
+  </body>
+</html>
