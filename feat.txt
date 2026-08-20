@@ -1,0 +1,22 @@
+Build a simple, single-file web application (HTML, CSS using Tailwind CDN, and vanilla JavaScript) for tracking vehicle entry and exit on a university campus.
+
+Features and Specifications:
+1. Input Form:
+   - Plate Number (text input, automatically converted to uppercase)
+   - Category (dropdown: "Student", "Faculty", "Visitor")
+   - Campus Status (dropdown: "IN", "OUT")
+   - Timestamp (datetime-local input, defaulting to the current time)
+   - "Add Record" button that submits the entry, clears the form, and updates the list.
+
+2. Vehicle Records Table:
+   - Display a clean table listing all recorded entries with columns: Plate Number, Category, Status, Timestamp, and Actions.
+   - Use color-coded badges for categories (e.g., Student vs. Faculty) and status (IN vs. OUT).
+   - Action column: Include a "Delete" button next to each row to remove individual records.
+
+3. Search & Filter Functionality:
+   - A real-time search input above the table that filters the recorded list by plate number, category, or status as the user types.
+
+4. Data Persistence & UX:
+   - Save all records to browser LocalStorage so data is preserved upon refreshing.
+   - Include a "Clear All" button to clear the entire record history with a confirmation prompt.
+   - Show a "No records found" message when the list or search results are empty.
